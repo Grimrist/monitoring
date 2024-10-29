@@ -20,11 +20,26 @@ void writeToScreen(int x, int y, char* str, uint16_t textColor, uint16_t bgColor
   }
   xSemaphoreTake(displaySemaphore, portMAX_DELAY);
   M5.Lcd.setTextColor(textColor, bgColor);
-  
   M5.Lcd.setCursor(x - len, y);
   M5.Lcd.println(str);
   M5.Lcd.setTextColor(WHITE, BLACK);
   xSemaphoreGive(displaySemaphore);
+}
+
+void clearRegion(int x, int y, int len) {
+  xSemaphoreTake(displaySemaphore, portMAX_DELAY);
+  M5.Lcd.setTextColor(WHITE, BLACK);
+  M5.Lcd.setCursor(x,y);
+
+  // Generate string with the correct amount of spaces
+  char* buf = (char*) malloc(len+1);
+  memset(buf, ' ', len);
+  buf[len] = '\0'; 
+  
+  M5.Lcd.print(buf);
+  M5.Lcd.setTextColor(WHITE, BLACK);
+  xSemaphoreGive(displaySemaphore);
+  free(buf);
 }
 
 // Retrieves unix time from the RTC

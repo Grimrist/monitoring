@@ -160,4 +160,4 @@ void register_setFreq_cmd() {
   };
 
   esp_console_cmd_register(&setFreq_cmd);
-}
+  }

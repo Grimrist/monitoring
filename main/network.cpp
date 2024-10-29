@@ -88,7 +88,6 @@ void start_http_server(const char* httpServer, const int port) {
   if(!Http.begin(httpServer, port, "/api/v2/write?org=weather-station-group&bucket=weather-records&precision=s")) {
     printf("Failed to connect to server\n");
     return;
-    //delay(6000); // Attempt to connect periodically
   }
   printf("Connection was successful\n");
   Http.addHeader("Content-Type", "text/plain; charset=utf-8");
@@ -103,31 +102,15 @@ void upload_data(void* _) {
     while(!httpActive) {
       sleep(5000);
     }
-    /*
-    time_t cur_time = getUnixTimestamp();
-    float temp = bme.temp();
-    float hum = bme.hum();
-    float pres = bme.pres();
-    if(isnan(temp)) {
-      temp = 0;
-    }
-    if(isnan(hum)) {
-      hum = 0;
-    }
-    if(isnan(pres)) {
-      pres = 0;
-    }
-    */
     sprintf(dataBuf, 
       "weather,sensor_id=SFEWeatherMeterKit,location=test rain_fall=%f,wind_speed=%f,wind_direction=%f %d \n \
       weather,sensor_id=bme280,location=test temperature=%f,humidity=%f,pressure=%f %d", 
       data.rain_fall, data.wind_speed, data.wind_direction, data.timestamp, 
       data.temperature, data.humidity, data.pressure, data.timestamp);
-    //#endif
-    
+
     while(true) {
       int httpCode = Http.POST(dataBuf);
-      writeToScreen(0, M5.Lcd.height()-10, "                                       ");
+      clearRegion(0, M5.Lcd.height()-10, 40);
       if(httpCode == 204) {
         writeToScreen(0, M5.Lcd.height()-10, "Sent data successfully");
         break;
@@ -138,7 +121,7 @@ void upload_data(void* _) {
         while(i < MAX_ATTEMPTS) {
           writeToScreen(0, M5.Lcd.height()-10, "Failed to send data");
           delay(3000);
-          writeToScreen(0, M5.Lcd.height()-10, "                                    ");
+          clearRegion(0, M5.Lcd.height()-10, 40);
           delay(1000);
           i++;
         }
@@ -147,8 +130,12 @@ void upload_data(void* _) {
       sprintf(debugBuf, "Returned %d, dropping packet", httpCode);
       writeToScreen(0, M5.Lcd.height()-10, debugBuf);
       delay(3000);
-      writeToScreen(0, M5.Lcd.height()-10, "                                          ");
+      clearRegion(0, M5.Lcd.height()-10, strlen(debugBuf));
     }
   }
   vTaskDelete(NULL);
 }
+
+//void resend_data {
+
+//}
