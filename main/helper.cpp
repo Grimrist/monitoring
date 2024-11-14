@@ -111,3 +111,18 @@ bool angleToDirection(float ang, char* buf) {
   }
   return false;
 }
+
+void setRTC(tm timeinfo) {
+  RTC_DateTypeDef RTC_DateStruct;
+  RTC_TimeTypeDef RTC_TimeStruct;
+  
+  RTC_DateStruct.WeekDay = timeinfo.tm_wday;
+  RTC_DateStruct.Date = timeinfo.tm_mday;
+  RTC_DateStruct.Month = timeinfo.tm_mon + 1;
+  RTC_DateStruct.Year = timeinfo.tm_year + 1900;
+  RTC_TimeStruct.Seconds = timeinfo.tm_sec;
+  RTC_TimeStruct.Minutes = timeinfo.tm_min;
+  RTC_TimeStruct.Hours = timeinfo.tm_hour;
+  M5.Rtc.SetDate(&RTC_DateStruct);
+  M5.Rtc.SetTime(&RTC_TimeStruct);
+}

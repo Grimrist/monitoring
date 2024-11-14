@@ -39,9 +39,6 @@ void configRTCLocalTime() {
   while(!getLocalTime(&timeinfo)) {
     delay(500); // Wait until the local time is obtained
   }
-  if(timeinfo.tm_isdst) {
-
-  }
   RTC_DateStruct.WeekDay = timeinfo.tm_wday;
   RTC_DateStruct.Date = timeinfo.tm_mday;
   RTC_DateStruct.Month = timeinfo.tm_mon + 1;

@@ -115,11 +115,11 @@ void setup() {
 
   init_console();
   int err = 0;
-  esp_console_run("wificonf ap m5core2 password1234", &err);
+  esp_console_run("setwifi ap m5core2 password1234", &err);
   if(err) {
     writeToScreen(M5.Lcd.width(), M5.Lcd.height()-10, "Couldn't start AP", RED, BLACK, right);
   };
-  esp_console_run("dbconf 192.168.4.2 8086", &err);
+  esp_console_run("setdb 192.168.4.2 8086", &err);
 
   #ifdef SFE_WMK_PLAFTORM_UNKNOWN
     weatherMeterKit.setADCResolutionBits(10);

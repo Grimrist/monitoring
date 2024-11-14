@@ -10,6 +10,7 @@
 #include <M5Core2.h>
 #include <string.h>
 #include "global.h"
+#include "helper.h"
 
 static esp_console_repl_t *repl;
 
@@ -19,13 +20,13 @@ static struct {
   struct arg_str *ssid = arg_str1(NULL, NULL, "<ssid>", "SSID for access point");
   struct arg_str *password = arg_str1(NULL, NULL, "<pass>", "Password for access point, must be at least 8 characters");
   struct arg_end *end = arg_end(2);
-} wifiConf_args;
+} setWifi_args;
 
 static struct {
     struct arg_str *ip;
     struct arg_int *port;
     struct arg_end *end;
-} dbConf_args;
+} setDB_args;
 
 static struct {
     struct arg_int *time;
@@ -38,6 +39,12 @@ static struct {
   struct arg_end *end;
 } recoverData_args;
 
+static struct {
+  struct arg_str *timestamp;
+  struct arg_end *end;
+} setRTC_args;
+
+
 void init_console() {
   esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
   esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
@@ -46,43 +53,44 @@ void init_console() {
   esp_console_register_help_command();
   esp_console_start_repl(repl);
 
-  register_wifiConf_cmd();
-  register_dbConf_cmd();
+  register_setWifi_cmd();
+  register_setDB_cmd();
   register_setFreq_cmd();
   register_recoverData_cmd();
+  register_setRTC_cmd();
 }
 
 /* 
-  Implementation of wificonf command, relies on network.cpp
+  Implementation of setWifi command, relies on network.cpp
 */
-static int wifiConf_impl(int argc, char** argv) {
-  int err = arg_parse(argc, argv, (void **) &wifiConf_args);
+static int setWifi_impl(int argc, char** argv) {
+  int err = arg_parse(argc, argv, (void **) &setWifi_args);
   if (err != 0) {
-      arg_print_errors(stderr, wifiConf_args.end, argv[0]);
+      arg_print_errors(stderr, setWifi_args.end, argv[0]);
       return 1;
   }
-  if ((wifiConf_args.ap->count + wifiConf_args.sta->count) != 1) {
+  if ((setWifi_args.ap->count + setWifi_args.sta->count) != 1) {
     printf("Please specify either the 'ap' flag or 'station' flag.\n");
     return 1;
   }
   bool isAP = true;
 
-  if(wifiConf_args.ap->count) {
-    if (strlen(wifiConf_args.password->sval[0]) < 8) {
+  if(setWifi_args.ap->count) {
+    if (strlen(setWifi_args.password->sval[0]) < 8) {
       printf("Password too short!\n");
       return 1;
     }
     printf("Setting up AP with SSID '%s' and password '%s'\n",
-          wifiConf_args.ssid->sval[0], wifiConf_args.password->sval[0]);
+          setWifi_args.ssid->sval[0], setWifi_args.password->sval[0]);
   }
   else {
     isAP = false;
     printf("Enabling station mode and connecting to SSID '%s'\n",
-          wifiConf_args.ssid->sval[0]);
+          setWifi_args.ssid->sval[0]);
   }
 
-  bool connected = start_wifi_cmd(wifiConf_args.ssid->sval[0],
-                                  wifiConf_args.password->sval[0],
+  bool connected = start_wifi_cmd(setWifi_args.ssid->sval[0],
+                                  setWifi_args.password->sval[0],
                                   isAP);
   if(!connected) {
     printf("Failed to start wifi mode\n");
@@ -92,48 +100,48 @@ static int wifiConf_impl(int argc, char** argv) {
   return 0;
 }
 
-void register_wifiConf_cmd() {
-  esp_console_cmd_t wifiConf_cmd {
-    .command = "wificonf",
+void register_setWifi_cmd() {
+  esp_console_cmd_t setWifi_cmd {
+    .command = "setWifi",
     .help = "Configure WiFi access point",
     .hint = NULL,
-    .func = &wifiConf_impl,
-    .argtable = &wifiConf_args
+    .func = &setWifi_impl,
+    .argtable = &setWifi_args
   };
 
-  esp_console_cmd_register(&wifiConf_cmd);
+  esp_console_cmd_register(&setWifi_cmd);
 }
 
 /*
-  Implementation of dbconf command.
+  Implementation of setDB command.
 */
-static int dbConf_impl(int argc, char** argv) {
-  int err = arg_parse(argc, argv, (void **) &dbConf_args);
+static int setDB_impl(int argc, char** argv) {
+  int err = arg_parse(argc, argv, (void **) &setDB_args);
   if (err != 0) {
-      arg_print_errors(stderr, dbConf_args.end, argv[0]);
+      arg_print_errors(stderr, setDB_args.end, argv[0]);
       return 1;
   }
   printf("Connecting to DB with ip '%s' and port %d\n",
-           dbConf_args.ip->sval[0], dbConf_args.port->ival[0]);
+           setDB_args.ip->sval[0], setDB_args.port->ival[0]);
            
-  start_http_server(dbConf_args.ip->sval[0], dbConf_args.port->ival[0]);
+  start_http_server(setDB_args.ip->sval[0], setDB_args.port->ival[0]);
   return 0;
 }
 
-void register_dbConf_cmd() {
-  dbConf_args.ip = arg_str1(NULL, NULL, "<ip>", "IP address for InfluxDB");
-  dbConf_args.port = arg_int1(NULL, NULL, "<port>", "Port used for InfluxDB");
-  dbConf_args.end = arg_end(2);
+void register_setDB_cmd() {
+  setDB_args.ip = arg_str1(NULL, NULL, "<ip>", "IP address for InfluxDB");
+  setDB_args.port = arg_int1(NULL, NULL, "<port>", "Port used for InfluxDB");
+  setDB_args.end = arg_end(2);
 
-  esp_console_cmd_t dbConf_cmd {
-    .command = "dbconf",
+  esp_console_cmd_t setDB_cmd {
+    .command = "setDB",
     .help = "Configure InfluxDB connection",
     .hint = NULL,
-    .func = &dbConf_impl,
-    .argtable = &dbConf_args
+    .func = &setDB_impl,
+    .argtable = &setDB_args
   };
 
-  esp_console_cmd_register(&dbConf_cmd);
+  esp_console_cmd_register(&setDB_cmd);
 }
 
 /*
@@ -215,3 +223,38 @@ void register_recoverData_cmd() {
   esp_console_cmd_register(&recoverData_cmd);
 }
 
+/*
+  Implementation of setRTC command. Sets the real time clock to the indicated time
+*/
+static int setRTC_impl(int argc, char** argv) {
+  int err = arg_parse(argc, argv, (void **) &setRTC_args);
+  if (err != 0) {
+      arg_print_errors(stderr, setRTC_args.end, argv[0]);
+      return 1;
+  }
+  struct tm time = {0};
+  printf("Setting date to %s\n",
+           setRTC_args.timestamp->sval[0]);
+  if(strptime(setRTC_args.timestamp->sval[0], "%Y/%m/%d %H:%M:%S", &time) == NULL) {
+    printf("Malformed timestamp, could not convert to UNIX timestamp\n");
+    return 1;
+  }
+  time.tm_isdst = _daylight;
+  setRTC(time);
+  return 0;
+}
+
+void register_setRTC_cmd() {
+  setRTC_args.timestamp = arg_str1(NULL, NULL, "<time>", "Timestamp, in YYYY/MM/DD HH:MM:SS format");
+  setRTC_args.end = arg_end(2);
+
+  esp_console_cmd_t setRTC_cmd {
+    .command = "setRTC",
+    .help = "Sets the real time clock",
+    .hint = NULL,
+    .func = &setRTC_impl,
+    .argtable = &setRTC_args
+  };
+
+  esp_console_cmd_register(&setRTC_cmd);
+}

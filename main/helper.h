@@ -1,4 +1,5 @@
 #include "BME280I2C.h"
+#include <time.h>
 
 typedef struct {
   time_t timestamp;
@@ -17,3 +18,4 @@ void clearRegion(int x, int y, int len);
 time_t getUnixTimestamp();
 sensor_data deserializeSensorData(char* str);
 bool angleToDirection(float ang, char* buf);
+void setRTC(tm time);
