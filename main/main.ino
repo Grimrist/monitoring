@@ -34,8 +34,9 @@ https://github.com/sparkfun/SparkFun_Weather_Meter_Kit_Arduino_Library
 #define STORAGE_QUEUE 50
 #define NETWORK_QUEUE 200
 
-// Semaphores
-SemaphoreHandle_t displaySemaphore = NULL;
+// Mutexes
+SemaphoreHandle_t displayMutex = NULL;
+SemaphoreHandle_t storageMutex = NULL;
 
 // Weather station definitions
 int rain_fall_pin = 27;
@@ -79,13 +80,14 @@ void timer_pushData(TimerHandle_t timer) {
   if(isnan(pres)) 
     pres = 0;
   sensor_data data = {
+    .timestamp = getUnixTimestamp(),
     .rain_fall = weatherMeterKit.getTotalRainfall(),
     .wind_speed = weatherMeterKit.getWindSpeed(),
     .wind_direction = weatherMeterKit.getWindDirection(),
     .temperature = temp,
     .humidity = hum,
     .pressure = pres,
-    .timestamp = getUnixTimestamp(),
+    .init = true,
   };
   xQueueSend(networkQueue, &data, 0);
   xQueueSend(storageQueue, &data, 0);
@@ -94,12 +96,23 @@ void timer_pushData(TimerHandle_t timer) {
 void setup() {
   M5.begin(true, true, false, true); //Init M5Core2.
   init_screen();
-  displaySemaphore = xSemaphoreCreateBinary();
-  if(displaySemaphore == NULL) {
-    printf("Failed to initialize display semaphore! Aborting...\n");
+  
+  // Initialize display mutex
+  displayMutex = xSemaphoreCreateMutex();
+  if(displayMutex == NULL) {
+    printf("Failed to initialize display mutex! Aborting...\n");
     return;
   }
-  xSemaphoreGive(displaySemaphore);
+  xSemaphoreGive(displayMutex);
+
+  // Initialize storage mutex
+  storageMutex = xSemaphoreCreateMutex();
+  if(storageMutex == NULL) {
+    printf("Failed to initialize storage mutex! Aborting...\n");
+    return;
+  }
+  xSemaphoreGive(storageMutex);
+
   init_console();
   int err = 0;
   esp_console_run("wificonf ap m5core2 password1234", &err);
@@ -107,6 +120,7 @@ void setup() {
     writeToScreen(M5.Lcd.width(), M5.Lcd.height()-10, "Couldn't start AP", RED, BLACK, right);
   };
   esp_console_run("dbconf 192.168.4.2 8086", &err);
+
   #ifdef SFE_WMK_PLAFTORM_UNKNOWN
     weatherMeterKit.setADCResolutionBits(10);
     printf(F("Unknown platform! Please edit the code with your ADC resolution!\n"));

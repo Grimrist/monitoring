@@ -7,5 +7,7 @@ extern TimerHandle_t threadTimer;
 extern QueueHandle_t networkQueue;
 extern QueueHandle_t storageQueue;
 
+extern SemaphoreHandle_t displayMutex;
+extern SemaphoreHandle_t storageMutex;
 extern SFEWeatherMeterKit weatherMeterKit;
 extern BME280I2C bme280;

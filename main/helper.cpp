@@ -6,11 +6,16 @@
 #include <M5Core2.h>
 #include <time.h>
 #include "helper.h"
+#include "global.h"
 #define screen_width 320
 #define screen_height 240
 #define char_width 8
+
+char* directionArray[16] = {"N", "NNE", "NE", "ENE", 
+                            "E", "ESE", "SE", "SSE", 
+                            "S", "SSW", "SW", "WSW",
+                            "W", "WNW", "NW", "NNW"};
 char unixStrBuff[40];
-extern SemaphoreHandle_t displaySemaphore;
 
 // Writes to screen with thread safety. Left/Right specifies anchor point location
 void writeToScreen(int x, int y, char* str, uint16_t textColor, uint16_t bgColor, enum Direction direction) {
@@ -18,27 +23,25 @@ void writeToScreen(int x, int y, char* str, uint16_t textColor, uint16_t bgColor
   if(direction == right) {
     len = strlen(str) * 6;
   }
-  xSemaphoreTake(displaySemaphore, portMAX_DELAY);
+  xSemaphoreTake(displayMutex, portMAX_DELAY);
   M5.Lcd.setTextColor(textColor, bgColor);
   M5.Lcd.setCursor(x - len, y);
   M5.Lcd.println(str);
   M5.Lcd.setTextColor(WHITE, BLACK);
-  xSemaphoreGive(displaySemaphore);
+  xSemaphoreGive(displayMutex);
 }
 
 void clearRegion(int x, int y, int len) {
-  xSemaphoreTake(displaySemaphore, portMAX_DELAY);
+  xSemaphoreTake(displayMutex, portMAX_DELAY);
   M5.Lcd.setTextColor(WHITE, BLACK);
   M5.Lcd.setCursor(x,y);
-
   // Generate string with the correct amount of spaces
   char* buf = (char*) malloc(len+1);
   memset(buf, ' ', len);
   buf[len] = '\0'; 
   
   M5.Lcd.print(buf);
-  M5.Lcd.setTextColor(WHITE, BLACK);
-  xSemaphoreGive(displaySemaphore);
+  xSemaphoreGive(displayMutex);
   free(buf);
 }
 
@@ -59,4 +62,52 @@ time_t getUnixTimestamp() {
   else {
     return -1;
   }
+}
+
+sensor_data deserializeSensorData(char* str) {
+  sensor_data data = { .init = false };
+  char* token;
+  char* tokenArray[7] = {0};
+  int i = 0;
+  char* buf; // For strtok_r thread safety
+  // Split our string into 7 tokens (matching our struct)
+  token = strtok_r(str, ",", &buf);
+  while(token != NULL && i < 7) {
+    tokenArray[i] = token;
+    i++;
+    token = strtok_r(str, ",", &buf); 
+  }
+  // Not enough tokens for struct, malformed file? Return just incase
+  if(i != 7) 
+    return data;
+
+  struct tm time = {0};
+  time_t str_timestamp = 0;
+  // Malformed date, so return without initializing.
+  if(strptime(tokenArray[0], "%Y/%m/%d %H:%M:%S", &time) == NULL) 
+    return data;
+  time.tm_isdst = _daylight;
+  str_timestamp = mktime(&time);
+
+  data.timestamp = str_timestamp;
+  data.rain_fall = atof(tokenArray[1]);
+  data.wind_speed = atof(tokenArray[2]);
+  data.wind_direction = atof(tokenArray[3]);
+  data.temperature = atof(tokenArray[4]);
+  data.humidity = atof(tokenArray[5]);
+  data.pressure = atof(tokenArray[6]);
+  data.init = true;
+  return data;
+}
+
+bool angleToDirection(float ang, char* buf) {
+  int i;
+  for(i = 0; i < 16; i++) {
+    if(ang >= 22.5 * i && ang < 22.5 * (i+1)) {
+      memset(buf, 0, 4);
+      strncpy(buf, directionArray[i], 4);
+      return true;
+    }
+  }
+  return false;
 }

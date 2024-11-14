@@ -126,7 +126,7 @@ void upload_data(void* _) {
           i++;
         }
       }
-      printf("Returned %d, dropping packet\n", httpCode);
+      //printf("Returned %d, dropping packet\n", httpCode);
       sprintf(debugBuf, "Returned %d, dropping packet", httpCode);
       writeToScreen(0, M5.Lcd.height()-10, debugBuf);
       delay(3000);
@@ -136,6 +136,8 @@ void upload_data(void* _) {
   vTaskDelete(NULL);
 }
 
-//void resend_data {
+/*
+void resend_data {
 
-//}
+}
+*/

@@ -4,6 +4,7 @@
 
 #include "console.h"
 #include "network.h"
+#include "storage.h"
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
 #include <M5Core2.h>
@@ -31,6 +32,12 @@ static struct {
     struct arg_end *end;
 } setFreq_args;
 
+static struct {
+  struct arg_str *timestamp_start;
+  struct arg_str *timestamp_end;
+  struct arg_end *end;
+} recoverData_args;
+
 void init_console() {
   esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
   esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
@@ -42,6 +49,7 @@ void init_console() {
   register_wifiConf_cmd();
   register_dbConf_cmd();
   register_setFreq_cmd();
+  register_recoverData_cmd();
 }
 
 /* 
@@ -141,7 +149,7 @@ static int setFreq_impl(int argc, char** argv) {
            setFreq_args.time->ival[0]);
            
   if(xTimerChangePeriod(threadTimer, pdMS_TO_TICKS(setFreq_args.time->ival[0] * 1000), 300) == pdFAIL) {
-    printf("Failed to change timer period");
+    printf("Failed to change timer period\n");
     return 1;
   }
   return 0;
@@ -160,4 +168,50 @@ void register_setFreq_cmd() {
   };
 
   esp_console_cmd_register(&setFreq_cmd);
+}
+
+/*
+  Implementation of recoverData command. Retrieves all data in SD card stored between the two dates
+*/
+static int recoverData_impl(int argc, char** argv) {
+  int err = arg_parse(argc, argv, (void **) &recoverData_args);
+  if (err != 0) {
+      arg_print_errors(stderr, recoverData_args.end, argv[0]);
+      return 1;
   }
+  struct tm time_start = {0};
+  struct tm time_end = {0};
+  printf("Sending data stored between %s and %s\n",
+           recoverData_args.timestamp_start->sval[0],
+           recoverData_args.timestamp_end->sval[0]);
+  if(strptime(recoverData_args.timestamp_start->sval[0], "%Y/%m/%d %H:%M:%S", &time_start) == NULL) {
+    printf("Malformed start timestamp, could not convert to UNIX timestamp\n");
+    return 1;
+  }
+  if(strptime(recoverData_args.timestamp_end->sval[0], "%Y/%m/%d %H:%M:%S", &time_end) == NULL) {
+    printf("Malformed end timestamp, could not convert to UNIX timestamp\n");
+    return 1;
+  }
+  time_start.tm_isdst = _daylight;
+  time_end.tm_isdst = _daylight;
+  readDataAndQueue(mktime(&time_start), mktime(&time_end));
+
+  return 0;
+}
+
+void register_recoverData_cmd() {
+  recoverData_args.timestamp_start = arg_str1(NULL, NULL, "<time_start>", "Beginning timestamp, in YYYY/MM/DD HH:MM:SS format");
+  recoverData_args.timestamp_end = arg_str1(NULL, NULL, "<time_end>", "Ending timestamp, in YYYY/MM/DD HH:MM:SS format");
+  recoverData_args.end = arg_end(2);
+
+  esp_console_cmd_t recoverData_cmd {
+    .command = "recoverData",
+    .help = "Send all data stored in SD card within the timestamp range to local DB",
+    .hint = NULL,
+    .func = &recoverData_impl,
+    .argtable = &recoverData_args
+  };
+
+  esp_console_cmd_register(&recoverData_cmd);
+}
+

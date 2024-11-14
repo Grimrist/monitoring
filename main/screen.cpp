@@ -20,7 +20,7 @@ RTC_TimeTypeDef RTCTime_screen;
 RTC_DateTypeDef RTCDate_screen;
 char timeStrbuff[64];
 char weatherStrbuff[64];
-
+char directionBuff[4];
 // Functions
 void print_time() {
   M5.Rtc.GetTime(&RTCTime_screen);
@@ -42,7 +42,8 @@ void print_weatherkit_data() {
 
   // Wind vane
   // Could display via directional arrow graphic alongside numerical value?
-  sprintf(weatherStrbuff, "Wind Vane: %0.1f [deg]\n", weatherMeterKit.getWindDirection());
+  angleToDirection(weatherMeterKit.getWindDirection(), directionBuff);
+  sprintf(weatherStrbuff, "Wind Vane: %0.4s    \n", directionBuff);
   writeToScreen(10, vane_row, weatherStrbuff);
 
   #ifdef BME_ENABLE
