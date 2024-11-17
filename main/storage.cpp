@@ -16,6 +16,7 @@ void store_data(void* _) {
     clearRegion((M5.Lcd.width()-(11*6))/2, 120, 30);
     // Create new log every day
     M5.Rtc.GetDate(&RTCDate);
+    M5.Rtc.GetTime(&RTCtime);
     sprintf(SDStrbuff, "/weather-data_%d-%02d-%02d.csv", RTCDate.Year, 
           RTCDate.Month, RTCDate.Date);
     File file = SD.open(SDStrbuff, FILE_APPEND);
@@ -24,6 +25,7 @@ void store_data(void* _) {
       sprintf(SDStrbuff, "%d/%02d/%02d %02d:%02d:%02d", RTCDate.Year,
           RTCDate.Month, RTCDate.Date, RTCtime.Hours, RTCtime.Minutes,
           RTCtime.Seconds);
+      printf("writing %s in sd\n", SDStrbuff);
       file.printf(SDStrbuff);
       sprintf(SDStrbuff, ",%f", storageData.rain_fall);
       file.printf(SDStrbuff);
@@ -53,11 +55,10 @@ void store_data(void* _) {
 }
 
 // Read data from SD card, ranging between two UNIX timestamps, and queue it
-// I'd rather this be broken up into more functions. Need to think about how.
 void readDataAndQueue(time_t timestamp, time_t timestamp_end) {
   double diff = difftime(timestamp_end, timestamp);
   struct tm date = *localtime(&timestamp);
-  char readBuffer[64];
+  char readBuffer[256];
   size_t read = 0;
 
   while(diff >= 0) {

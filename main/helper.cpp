@@ -78,14 +78,17 @@ sensor_data deserializeSensorData(char* str) {
     token = strtok_r(str, ",", &buf); 
   }
   // Not enough tokens for struct, malformed file? Return just incase
-  if(i != 7) 
+  if(i != 7) { 
+    printf("Wrong amount of tokens\n");
     return data;
-
+  }
   struct tm time = {0};
   time_t str_timestamp = 0;
   // Malformed date, so return without initializing.
-  if(strptime(tokenArray[0], "%Y/%m/%d %H:%M:%S", &time) == NULL) 
+  if(strptime(tokenArray[0], "%Y/%m/%d %H:%M:%S", &time) == NULL) {
+    printf("Malformed date %s\n", tokenArray[0]);
     return data;
+  }
   time.tm_isdst = _daylight;
   str_timestamp = mktime(&time);
 

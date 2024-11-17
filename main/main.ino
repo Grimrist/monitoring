@@ -94,6 +94,7 @@ void timer_pushData(TimerHandle_t timer) {
 }
 
 void setup() {
+  configTime(-4 * 3600, 3600, NULL); // Not a good idea, but doing this temporarily
   M5.begin(true, true, false, true); //Init M5Core2.
   init_screen();
   
@@ -115,11 +116,11 @@ void setup() {
 
   init_console();
   int err = 0;
-  esp_console_run("setwifi ap m5core2 password1234", &err);
+  esp_console_run("setWifi ap m5core2 password1234", &err);
   if(err) {
     writeToScreen(M5.Lcd.width(), M5.Lcd.height()-10, "Couldn't start AP", RED, BLACK, right);
   };
-  esp_console_run("setdb 192.168.4.2 8086", &err);
+  esp_console_run("setDB 192.168.4.2 8086", &err);
 
   #ifdef SFE_WMK_PLAFTORM_UNKNOWN
     weatherMeterKit.setADCResolutionBits(10);

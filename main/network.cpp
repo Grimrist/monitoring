@@ -35,7 +35,9 @@ void configRTCLocalTime() {
   RTC_DateTypeDef RTC_DateStruct;
   RTC_TimeTypeDef RTC_TimeStruct;
   
-  configTime(-4 * 3600, 3600, ntpServer);
+  configTime(0, 0, ntpServer);
+  setenv("TZ", "<-04>4<-03>,M9.1.6/24,M4.1.6/24", 1);
+  tzset();
   while(!getLocalTime(&timeinfo)) {
     delay(500); // Wait until the local time is obtained
   }
@@ -88,7 +90,7 @@ void start_http_server(const char* httpServer, const int port) {
   }
   printf("Connection was successful\n");
   Http.addHeader("Content-Type", "text/plain; charset=utf-8");
-  Http.addHeader("Authorization", "Token fhXh88keqv2kLUkhEsgDYMiyUOJcGhUebRp93gzu3v_iB-0mFIHgOWZVl__SO89bD3lH-UvBLWjsD88741tFyw==");
+  Http.addHeader("Authorization", "Token pmSEgLNxbcXsM5r0M2foylcUYPna-M3uz2v5oCmAMlCHihqJaCXsb-4Ehy5cP84UjeMUXbN5K2Y-p0boAxVs7w==");
   httpActive = true;
   return;
 }
@@ -99,6 +101,12 @@ void upload_data(void* _) {
     while(!httpActive) {
       sleep(5000);
     }
+    if(isnan(data.humidity))
+      data.humidity = 0;
+    if(isnan(data.pressure))
+      data.pressure = 0;
+    if(isnan(data.temperature))
+      data.temperature = 0;
     sprintf(dataBuf, 
       "weather,sensor_id=SFEWeatherMeterKit,location=test rain_fall=%f,wind_speed=%f,wind_direction=%f %d \n \
       weather,sensor_id=bme280,location=test temperature=%f,humidity=%f,pressure=%f %d", 
@@ -132,9 +140,3 @@ void upload_data(void* _) {
   }
   vTaskDelete(NULL);
 }
-
-/*
-void resend_data {
-
-}
-*/

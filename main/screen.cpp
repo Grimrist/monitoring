@@ -33,13 +33,12 @@ void print_time() {
 
 void print_weatherkit_data() {
   // Rainfall
-  sprintf(weatherStrbuff, "Rainfall: %f [mm]\n", weatherMeterKit.getTotalRainfall());
+  sprintf(weatherStrbuff, "Rainfall: %f [mm]       \n", weatherMeterKit.getTotalRainfall());
   writeToScreen(10, rain_row, weatherStrbuff);
 
   // Anemometer
-  sprintf(weatherStrbuff, "Wind Speed: %0.5f [km/h]\n", weatherMeterKit.getWindSpeed());
+  sprintf(weatherStrbuff, "Wind Speed: %0.5f [km/h]      \n", weatherMeterKit.getWindSpeed());
   writeToScreen(10, anemometer_row, weatherStrbuff);
-
   // Wind vane
   // Could display via directional arrow graphic alongside numerical value?
   angleToDirection(weatherMeterKit.getWindDirection(), directionBuff);
@@ -48,16 +47,17 @@ void print_weatherkit_data() {
 
   #ifdef BME_ENABLE
     // Temperature (BME does not provide a precise reading)
-    sprintf(weatherStrbuff, "Temperature: %0.1f [C]]\n", bme.temp());
+    sprintf(weatherStrbuff, "Temperature: %0.1f [C]      \n", bme.temp());
     writeToScreen(10, temp_row, weatherStrbuff);
 
     // Humidity
-    sprintf(weatherStrbuff, "Humidity: %0.1f [deg]\n", bme.hum());
+    sprintf(weatherStrbuff, "Humidity: %0.1f% [RH]     \n", bme.hum());
     writeToScreen(10, hum_row, weatherStrbuff);
 
     // Pressure
-    sprintf(weatherStrbuff, "Pressure: %0.1f [deg]\n", bme.pres());
+    sprintf(weatherStrbuff, "Pressure: %0.1f [hPa]     \n", bme.pres());
     writeToScreen(10, pres_row, weatherStrbuff);
+
   #endif
 }
 
