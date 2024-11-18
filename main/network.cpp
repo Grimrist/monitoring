@@ -62,7 +62,8 @@ bool start_wifi_cmd(const char* ssid, const char* password, bool isAP) {
   WiFi.begin(ssid, password);
   while(WiFi.status() != WL_CONNECTED) {
     writeToScreen(M5.Lcd.width(), M5.Lcd.height()-10, "Couldn't connect to network", RED, BLACK, right);
-    delay(1000); // Wait 2s before checking connection again
+    delay(1000); // Wait 1s before checking connection again
+    writeToScreen(M5.Lcd.width(), M5.Lcd.height()-10, "                              ", WHITE, BLACK, right);
     if(!xTimerIsTimerActive(timer)) {
       printf("Gave up on connecting to network\n");
       return false;
@@ -72,6 +73,8 @@ bool start_wifi_cmd(const char* ssid, const char* password, bool isAP) {
   writeToScreen(M5.Lcd.width(), M5.Lcd.height()-10, "Connected to network", WHITE, BLACK, right);
   printf("IP address obtained: %s\n", WiFi.localIP().toString().c_str());
   configRTCLocalTime();
+  delay(1000);
+  writeToScreen(M5.Lcd.width(), M5.Lcd.height()-10, "                              ", WHITE, BLACK, right);
   return true;
 }
 
@@ -115,7 +118,7 @@ void upload_data(void* _) {
 
     while(true) {
       int httpCode = Http.POST(dataBuf);
-      clearRegion(0, M5.Lcd.height()-10, 40);
+      clearRegion(0, M5.Lcd.height()-10, 30);
       if(httpCode == 204) {
         writeToScreen(0, M5.Lcd.height()-10, "Sent data successfully");
         break;
@@ -126,7 +129,7 @@ void upload_data(void* _) {
         while(i < MAX_ATTEMPTS) {
           writeToScreen(0, M5.Lcd.height()-10, "Failed to send data");
           delay(3000);
-          clearRegion(0, M5.Lcd.height()-10, 40);
+          clearRegion(0, M5.Lcd.height()-10, 30);
           delay(1000);
           i++;
         }

@@ -19,7 +19,7 @@ https://github.com/sparkfun/SparkFun_Weather_Meter_Kit_Arduino_Library
 #include "BME280I2C.h"
 
 // Send data without sensors
-//#define DEBUG
+#define DEBUG
 
 #include "helper.h"
 #include "network.h"
@@ -64,12 +64,19 @@ TaskHandle_t storageThread;
 QueueHandle_t storageQueue;
 QueueHandle_t networkQueue;
 
+#ifdef DEBUG
+extern float temp;
+extern float hum;
+extern float pres;
+#endif
+
 /* 
   Callback function for timer to read and queue data to other threads
   TODO: Use this callback function to check thread status if necessary
 */
 void timer_pushData(TimerHandle_t timer) {
   time_t cur_time = getUnixTimestamp();
+  #ifndef DEBUG
   float temp = bme.temp();
   float hum = bme.hum();
   float pres = bme.pres();
@@ -89,6 +96,22 @@ void timer_pushData(TimerHandle_t timer) {
     .pressure = pres,
     .init = true,
   };
+  #endif
+  #ifdef DEBUG
+  sensor_data data = {
+    .timestamp = getUnixTimestamp(),
+    .rain_fall = weatherMeterKit.getTotalRainfall(),
+    .wind_speed = weatherMeterKit.getWindSpeed(),
+    .wind_direction = weatherMeterKit.getWindDirection(),
+    .temperature = temp,
+    .humidity = hum,
+    .pressure = pres,
+    //.temperature = 25 + ((rand() % 20)/10.0)-1,
+    //.humidity = 50 + (rand() % 4)-2,
+    //.pressure = 1010 + (rand() % 8) - 4,
+    .init = true,
+  };
+  #endif
   xQueueSend(networkQueue, &data, 0);
   xQueueSend(storageQueue, &data, 0);
 }

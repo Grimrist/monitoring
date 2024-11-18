@@ -25,7 +25,6 @@ void store_data(void* _) {
       sprintf(SDStrbuff, "%d/%02d/%02d %02d:%02d:%02d", RTCDate.Year,
           RTCDate.Month, RTCDate.Date, RTCtime.Hours, RTCtime.Minutes,
           RTCtime.Seconds);
-      printf("writing %s in sd\n", SDStrbuff);
       file.printf(SDStrbuff);
       sprintf(SDStrbuff, ",%f", storageData.rain_fall);
       file.printf(SDStrbuff);

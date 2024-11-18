@@ -11,10 +11,10 @@
 #define screen_height 240
 #define char_width 8
 
-char* directionArray[16] = {"N", "NNE", "NE", "ENE", 
-                            "E", "ESE", "SE", "SSE", 
-                            "S", "SSW", "SW", "WSW",
-                            "W", "WNW", "NW", "NNW"};
+char* directionArray[8] = {"N", "NE", 
+                           "E", "SE", 
+                           "S", "SW",
+                           "W", "NW"};
 char unixStrBuff[40];
 
 // Writes to screen with thread safety. Left/Right specifies anchor point location
@@ -105,8 +105,8 @@ sensor_data deserializeSensorData(char* str) {
 
 bool angleToDirection(float ang, char* buf) {
   int i;
-  for(i = 0; i < 16; i++) {
-    if(ang >= 22.5 * i && ang < 22.5 * (i+1)) {
+  for(i = 0; i < 8; i++) {
+    if(ang >= 45 * i && ang < 45 * (i+1)) {
       memset(buf, 0, 4);
       strncpy(buf, directionArray[i], 4);
       return true;

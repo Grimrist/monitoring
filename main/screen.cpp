@@ -4,7 +4,7 @@
 #include "global.h"
 
 #define font_size 1
-
+#define DEBUG
 // Constants used for screen placement
 #define title_row 1 * font_size * 10
 #define time_row 2 * font_size * 10
@@ -21,6 +21,11 @@ RTC_DateTypeDef RTCDate_screen;
 char timeStrbuff[64];
 char weatherStrbuff[64];
 char directionBuff[4];
+#ifdef DEBUG
+float temp;
+float hum;
+float pres;
+#endif
 // Functions
 void print_time() {
   M5.Rtc.GetTime(&RTCTime_screen);
@@ -45,7 +50,7 @@ void print_weatherkit_data() {
   sprintf(weatherStrbuff, "Wind Vane: %0.4s    \n", directionBuff);
   writeToScreen(10, vane_row, weatherStrbuff);
 
-  #ifdef BME_ENABLE
+  #if defined(BME_ENABLE)
     // Temperature (BME does not provide a precise reading)
     sprintf(weatherStrbuff, "Temperature: %0.1f [C]      \n", bme.temp());
     writeToScreen(10, temp_row, weatherStrbuff);
@@ -56,6 +61,31 @@ void print_weatherkit_data() {
 
     // Pressure
     sprintf(weatherStrbuff, "Pressure: %0.1f [hPa]     \n", bme.pres());
+    writeToScreen(10, pres_row, weatherStrbuff);
+
+  #elif defined(DEBUG)
+    // Temperature (BME does not provide a precise reading)
+    if(rand() % 100 > 90) {
+      temp = fmax(24.6, temp + ((rand() % 3)/10.0)-0.1);
+      temp = fmin(temp, 25.5);
+    }
+    sprintf(weatherStrbuff, "Temperature: %0.1f [C]      \n", temp);
+    writeToScreen(10, temp_row, weatherStrbuff);
+
+    // Humidity
+    if(rand() % 100 > 90) {
+      hum = fmax(49, hum + ((rand() % 3)/10.0)-0.1);
+      hum = fmin(hum, 51);
+    }
+    sprintf(weatherStrbuff, "Humidity: %0.1f [RH]     \n", hum);
+    writeToScreen(10, hum_row, weatherStrbuff);
+
+    // Pressure
+    if(rand() % 100 > 90) {
+      pres = fmax(1009, pres + ((rand() % 3)/10.0)-0.1);
+      pres = fmin(pres, 1011);
+    }
+    sprintf(weatherStrbuff, "Pressure: %0.1f [hPa]     \n", pres);
     writeToScreen(10, pres_row, weatherStrbuff);
 
   #endif
