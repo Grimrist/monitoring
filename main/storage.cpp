@@ -47,9 +47,9 @@ void store_data(void* _) {
     else {
       writeToScreen((M5.Lcd.width()-(11*6))/2, 120, "Error writing to file", RED, BLACK);
     }
-    delay(2000);
+    //delay(2000);
     clearRegion((M5.Lcd.width()-(11*6))/2, 120, 30);
-    delay(1000);
+    //delay(1000);
   }
 }
 
